@@ -1,7 +1,9 @@
 package pl.com.bottega.ecommerce.sales.domain.invoicing;
 
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.Mockito;
+import org.mockito.runners.MockitoJUnitRunner;
 import pl.com.bottega.ecommerce.sales.domain.productscatalog.ProductData;
 import pl.com.bottega.ecommerce.sales.domain.productscatalog.ProductType;
 import pl.com.bottega.ecommerce.sharedkernel.Money;
@@ -12,7 +14,9 @@ import java.util.List;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.collection.IsCollectionWithSize.hasSize;
+import static org.mockito.Mockito.times;
 
+@RunWith(MockitoJUnitRunner.class)
 public class BookKeeperTest {
 
     @Test
@@ -20,7 +24,7 @@ public class BookKeeperTest {
         //Given
         final Money totalCost = new Money(10);
         final int quantity = 1;
-        final Tax tax = new Tax(new Money(0), "desc");
+        final Tax tax = getTax();
 
         final BookKeeper bookKeeper = getBookKeeper();
         final ProductData productData = getProductData();
@@ -38,7 +42,7 @@ public class BookKeeperTest {
         //Given
         final Money totalCost = new Money(10);
         final int quantity = 1;
-        final Tax tax = new Tax(new Money(0), "desc");
+        final Tax tax = getTax();
 
         final BookKeeper bookKeeper = getBookKeeper();
         final ProductData productData = getProductData();
@@ -48,7 +52,15 @@ public class BookKeeperTest {
         //When
         final Invoice issuance = bookKeeper.issuance(invoiceRequest, taxPolicy);
         //Then
+        Mockito.verify(taxPolicy, times(2)).calculateTax(ProductType.STANDARD, totalCost);
         assertThat(issuance.getItems(), hasSize(2));
+    }
+
+    private Tax getTax() {
+        final Tax tax = Mockito.mock(Tax.class);
+        Mockito.when(tax.getAmount()).thenReturn(new Money(0));
+        Mockito.when(tax.getDescription()).thenReturn("description");
+        return tax;
     }
 
     private BookKeeper getBookKeeper() {
