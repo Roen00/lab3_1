@@ -1,22 +1,64 @@
 package pl.com.bottega.ecommerce.sales.domain.invoicing;
 
 import org.junit.Test;
+import org.mockito.Mockito;
+import pl.com.bottega.ecommerce.sales.domain.productscatalog.ProductData;
+import pl.com.bottega.ecommerce.sales.domain.productscatalog.ProductType;
+import pl.com.bottega.ecommerce.sharedkernel.Money;
 
-import static org.junit.Assert.*;
+import java.util.Collections;
+
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.collection.IsCollectionWithSize.hasSize;
 
 public class BookKeeperTest {
 
     @Test
-    public void testCase1(){
+    public void testCase1() {
         //Given
-        final InvoiceFactory invoiceFactory = new InvoiceFactory();
-        final BookKeeper bookKeeper = new BookKeeper(invoiceFactory);
-        
+        final Money totalCost = new Money(10);
+        final int quantity = 1;
+        final Tax tax = new Tax(new Money(0), "desc");
+
+        final BookKeeper bookKeeper = getBookKeeper();
+        final ProductData productData = getProductData();
+        final RequestItem requestItem = getRequestItem(totalCost, quantity, productData);
+        final InvoiceRequest invoiceRequest = getInvoiceRequest(requestItem);
+        final TaxPolicy taxPolicy = getTaxPolicy(totalCost, tax);
         //When
-
-
+        final Invoice issuance = bookKeeper.issuance(invoiceRequest, taxPolicy);
         //Then
+        assertThat(issuance.getItems(), hasSize(1));
+    }
 
+    private BookKeeper getBookKeeper() {
+        final InvoiceFactory invoiceFactory = new InvoiceFactory();
+        return new BookKeeper(invoiceFactory);
+    }
 
+    private TaxPolicy getTaxPolicy(Money totalCost, Tax tax) {
+        final TaxPolicy taxPolicy = Mockito.mock(TaxPolicy.class);
+        Mockito.when(taxPolicy.calculateTax(ProductType.STANDARD, totalCost)).thenReturn(tax);
+        return taxPolicy;
+    }
+
+    private InvoiceRequest getInvoiceRequest(RequestItem requestItem) {
+        final InvoiceRequest invoiceRequest = Mockito.mock(InvoiceRequest.class);
+        Mockito.when(invoiceRequest.getItems()).thenReturn(Collections.singletonList(requestItem));
+        return invoiceRequest;
+    }
+
+    private ProductData getProductData() {
+        final ProductData productData = Mockito.mock(ProductData.class);
+        Mockito.when(productData.getType()).thenReturn(ProductType.STANDARD);
+        return productData;
+    }
+
+    private RequestItem getRequestItem(Money totalCost, int quantity, ProductData productData) {
+        final RequestItem requestItem = Mockito.mock(RequestItem.class);
+        Mockito.when(requestItem.getTotalCost()).thenReturn(totalCost);
+        Mockito.when(requestItem.getProductData()).thenReturn(productData);
+        Mockito.when(requestItem.getQuantity()).thenReturn(quantity);
+        return requestItem;
     }
 }
