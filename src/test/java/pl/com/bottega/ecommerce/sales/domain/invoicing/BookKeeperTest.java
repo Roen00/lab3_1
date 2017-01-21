@@ -6,7 +6,9 @@ import pl.com.bottega.ecommerce.sales.domain.productscatalog.ProductData;
 import pl.com.bottega.ecommerce.sales.domain.productscatalog.ProductType;
 import pl.com.bottega.ecommerce.sharedkernel.Money;
 
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.collection.IsCollectionWithSize.hasSize;
@@ -23,12 +25,30 @@ public class BookKeeperTest {
         final BookKeeper bookKeeper = getBookKeeper();
         final ProductData productData = getProductData();
         final RequestItem requestItem = getRequestItem(totalCost, quantity, productData);
-        final InvoiceRequest invoiceRequest = getInvoiceRequest(requestItem);
+        final InvoiceRequest invoiceRequest = getInvoiceRequest(Collections.singletonList(requestItem));
         final TaxPolicy taxPolicy = getTaxPolicy(totalCost, tax);
         //When
         final Invoice issuance = bookKeeper.issuance(invoiceRequest, taxPolicy);
         //Then
         assertThat(issuance.getItems(), hasSize(1));
+    }
+
+    @Test
+    public void testCase2() {
+        //Given
+        final Money totalCost = new Money(10);
+        final int quantity = 1;
+        final Tax tax = new Tax(new Money(0), "desc");
+
+        final BookKeeper bookKeeper = getBookKeeper();
+        final ProductData productData = getProductData();
+        final RequestItem requestItem = getRequestItem(totalCost, quantity, productData);
+        final InvoiceRequest invoiceRequest = getInvoiceRequest(Arrays.asList(requestItem, requestItem));
+        final TaxPolicy taxPolicy = getTaxPolicy(totalCost, tax);
+        //When
+        final Invoice issuance = bookKeeper.issuance(invoiceRequest, taxPolicy);
+        //Then
+        assertThat(issuance.getItems(), hasSize(2));
     }
 
     private BookKeeper getBookKeeper() {
@@ -42,9 +62,9 @@ public class BookKeeperTest {
         return taxPolicy;
     }
 
-    private InvoiceRequest getInvoiceRequest(RequestItem requestItem) {
+    private InvoiceRequest getInvoiceRequest(List<RequestItem> requestItemList) {
         final InvoiceRequest invoiceRequest = Mockito.mock(InvoiceRequest.class);
-        Mockito.when(invoiceRequest.getItems()).thenReturn(Collections.singletonList(requestItem));
+        Mockito.when(invoiceRequest.getItems()).thenReturn(requestItemList);
         return invoiceRequest;
     }
 
